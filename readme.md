@@ -34,7 +34,7 @@ cd ..
 nohup python -m paddle.distributed.launch --gpus 0,1,2,3 tools/train.py --config configs/exp/mot_ppyoloe_m_36e_xd_v8.yml --eval > log.txt &
 ```
 
-------------------------** 关于训练中断的异常处理**---------------------------------
+* 关于训练中断的异常处理 *
 如果训练过程中有意外中断，可以执行下面的命令继续训练，其中最后的数字为训练终止的最后一个epoch，这里设置的是每间隔4个epoch做一次评估和保存，所以最后一个epoch会是3、7、11、15、19、23……这样的位置。
 比如训练在22个epoch中断，则应当用下面的命令来继续训练
 如果没有中断，则只需要等待就可以了。
@@ -46,7 +46,6 @@ python -m paddle.distributed.launch --gpus 0,1,2,3 tools/train.py --config confi
 mv ./output/mot_ppyoloe_m_36e_xd_v8/43.pdparams ./output/mot_ppyoloe_m_36e_xd_v8/best_model.pdparams
 ```
 此处，容易产生歧义，最好的状态就是不产生中断：）
--------------------------------------------------------------------------------------
 
 ## Step 4. 
 测试并判定阈值
@@ -68,8 +67,8 @@ mv ./inference_model/mot_ppyoloe_m_36e_xd_v8 ../deploy/model/v8
 mv ./det_threshes.txt ../deploy/model/v8/
 ```
 
-# 至此，所有步骤都已经执行完毕，deploy就是我们要压缩并提交的文件夹.
-# test_images.txt存储的是待测试图像的地址列表.
+至此，所有步骤都已经执行完毕，deploy就是我们要压缩并提交的文件夹.
+test_images.txt存储的是待测试图像的地址列表.
 ```
 cd ../deploy
 python predict.py test_images.txt result.json
