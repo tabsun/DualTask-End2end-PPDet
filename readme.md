@@ -1,4 +1,4 @@
-A Dual-task and end-to-end Network for Detection and Semantic Segmentation
+#A Dual-task and end-to-end Network for Detection and Semantic Segmentation
 
 # Overview
 本项目旨在检测图像中的车辆、非机动车、行人、红灯、绿灯、黄灯、未亮灯7类目标，同时对车道线中实线、虚线与人行道线3类进行语义分割。我们设计了一个将目标检测与语义分割融合的dual-task end2end网络，从而实现在单个网络解决本场景中的问题。同时使得检测与分割从相互的内容信息中得到辅助，从而都得到了提高，尤其检测对分割结果的提高作用更加明显。
