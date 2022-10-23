@@ -1,0 +1,38 @@
+_BASE_: [
+  '../datasets/xd_detection_4classes.yml',
+  '../runtime.yml',
+  '../ppyoloe/_base_/optimizer_300e.yml',
+  '../ppyoloe/_base_/ppyoloe_crn.yml',
+  '../ppyoloe/_base_/ppyoloe_reader.yml',
+]
+log_iter: 100
+snapshot_epoch: 4
+weights: output/mot_ppyoloe_s_36e_xd_4classes/best_model
+
+pretrain_weights: pretrained/ppyoloe_crn_s_300e_coco.pdparams 
+depth_mult: 0.33
+width_mult: 0.50
+
+num_classes: 4
+
+TrainReader:
+  batch_size: 8
+
+epoch: 36
+LearningRate:
+  base_lr: 0.001
+  schedulers:
+    - !CosineDecay
+      max_epochs: 43
+    - !LinearWarmup
+      start_factor: 0.
+      epochs: 5
+
+PPYOLOEHead:
+  static_assigner_epoch: -1
+  nms:
+    name: MultiClassNMS
+    nms_top_k: 1000
+    keep_top_k: 100
+    score_threshold: 0.01
+    nms_threshold: 0.6

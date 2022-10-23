@@ -1,0 +1,184 @@
+########### DATASET ##########
+metric: COCO
+num_classes: 7
+
+TrainDataset:
+  !COCODataSet
+    image_dir: images
+    anno_path: train_det.json
+    dataset_dir: ./dataset
+    data_fields: ['image', 'gt_bbox', 'gt_class']
+
+EvalDataset:
+  !COCODataSet
+    image_dir: images
+    anno_path: val_det.json
+    dataset_dir: ./dataset
+    data_fields: ['image', 'gt_bbox', 'gt_class']
+
+TestDataset:
+  !ImageFolder
+    anno_path: test.txt # also support txt (like VOC's label_list.txt)
+    image_dir: images
+    dataset_dir: dataset # if set, anno_path will be 'dataset_dir/anno_path'
+
+########## RUNTIME ###########
+use_gpu: true
+use_xpu: false
+log_iter: 100
+save_dir: output
+snapshot_epoch: 1
+print_flops: false
+
+# Exporting the model
+export:
+  post_process: True  # Whether post-processing is included in the network when export model.
+  nms: True           # Whether NMS is included in the network when export model.
+  benchmark: False    # It is used to testing model performance, if set `True`, post-process and NMS will not be exported.
+
+########## OPTIMIZER ###########
+epoch: 36
+
+LearningRate:
+  base_lr: 0.0025 # For single card, set lr=0.025 for default 8 cards and batch size=20 training
+  schedulers:
+    - !CosineDecay
+      max_epochs: 36
+    - !LinearWarmup
+      start_factor: 0.
+      epochs: 3
+
+OptimizerBuilder:
+  optimizer:
+    momentum: 0.9
+    type: Momentum
+  regularizer:
+    factor: 0.0005
+    type: L2
+
+########## ARCHITECTURE ##########
+architecture: YOLOv3
+norm_type: sync_bn
+use_ema: true
+ema_decay: 0.9998
+
+YOLOv3:
+  backbone: CSPResNet
+  neck: CustomCSPPAN
+  yolo_head: PPYOLOEHead
+  det_loss_weight: 0.5
+  post_process: ~
+
+CSPResNet:
+  layers: [3, 6, 6, 3]
+  channels: [64, 128, 256, 512, 1024]
+  return_idx: [1, 2, 3]
+  use_large_stem: True
+
+CustomCSPPAN:
+  out_channels: [768, 384, 192]
+  stage_num: 1
+  block_num: 3
+  act: 'swish'
+  spp: true
+
+PPYOLOEHead:
+  fpn_strides: [32, 16, 8]
+  grid_cell_scale: 3.18
+  grid_cell_offset: 0.5
+  static_assigner_epoch: 100
+  use_varifocal_loss: True
+  loss_weight: {class: 2.0, iou: 1.5, dfl: 0.5}
+  static_assigner:
+    name: ATSSAssigner
+    topk: 9
+  assigner:
+    name: TaskAlignedAssigner
+    topk: 13
+    alpha: 1.0
+    beta: 6.0
+  nms:
+    name: MultiClassNMS
+    nms_top_k: 1000
+    keep_top_k: 100
+    score_threshold: 0.01
+    nms_threshold: 0.6
+
+MultiSegHead:
+  arm_out_chs: [96, 192, 384] # mot s width_multi=0.5
+  seg_head_inter_chs: [64, 64, 64]
+  num_classes: 4
+  min_kept: [26000, 26000, 26000] # batch_size * 1024 * 512 // 16 
+  coef: [1, 1, 1]
+
+### READER
+worker_num: 8
+eval_height: &eval_height 720
+eval_width: &eval_width 1280
+eval_size: &eval_size [*eval_height, *eval_width]
+
+TrainReader:
+  sample_transforms:
+    - Decode: {}
+    - InstaBoost: {
+        anno_file: ./dataset/train_det.json,
+        image_dir: ./dataset/images,
+        seg_dir: ./dataset/,
+        categories: ['car', 'vehicle', 'person', 'red_light', 'yellow_light', 'green_light', 'light'],
+       # action_prob: float = 0., 
+       # scale: tuple = (0.8, 1.2), 
+       # dx: float = 15, dy: float = 15,
+       # theta=(-1, 1), color_prob=0.5, 
+       # sync_nums_with_pillar=[0,1,2], sync_prob_with_pillar=[0.3, 0.4, 0.5], sync_heatmap_flag_with_pillar=False,
+       # sync_nums_only_obj=[0,1,2], sync_prob_only_obj=[0.3, 0.4, 0.5], sync_heatmap_flag_only_obj=False)
+        config_params: [
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[1.,0.,0.], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.91,0.09,0.0], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.05,0.95,0.0], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.33,0.47,0.2], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.31,0.39,0.3], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.38,0.42,0.2], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.50,0.30,0.2], 'sync_heatmap_flag_only_obj': True}
+               ]
+      }
+    - LaneMask: {train_anno_file: ./dataset/train_det.json,
+                 val_anno_file: ./dataset/val_det.json,
+                 mask_dir: ./dataset/label_mask }
+    - RandomExpand: {ratio: 1.8, fill_value: [123.675, 116.28, 103.53]}
+    - RandomCrop: {}
+    - RandomFlip: {}
+  batch_transforms:
+    - BatchRandomResize: {target_size: [[450,800], [540,960], [630,1120], [720,1280]], random_size: True, random_interp: True, keep_ratio: False}
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], is_scale: True}
+    - Permute: {}
+    - PadGT: {}
+  batch_size: 4
+  shuffle: true
+  drop_last: true
+  use_shared_memory: true
+  collate_batch: true
+
+EvalReader:
+  sample_transforms:
+    - Decode: {}
+    - Resize: {target_size: *eval_size, keep_ratio: False, interp: 2}
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], is_scale: True}
+    - Permute: {}
+  batch_size: 1
+
+TestReader:
+  inputs_def:
+    image_shape: [3, *eval_height, *eval_width]
+    #fuse_normalize: True
+  sample_transforms:
+    - Decode: {}
+    - Resize: {target_size: *eval_size, keep_ratio: False, interp: 2}
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], is_scale: True}
+    - Permute: {}
+  batch_size: 4
+
+########## OPTIONS ###########  
+weights: output/V0_DCU/best_model
+pretrain_weights: ./pretrained/ppyoloe_crn_s_300e_coco.pdparams
+depth_mult: 0.33
+width_mult: 0.50

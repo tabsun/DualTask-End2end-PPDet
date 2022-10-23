@@ -1,0 +1,15 @@
+_BASE_: [
+  '../datasets/xd_detection.yml',
+  '../runtime.yml',
+  './_base_/optimizer_300e.yml',
+  './_base_/ppyoloe_r50.yml',
+  './_base_/ppyoloe_reader.yml',
+]
+
+log_iter: 100
+snapshot_epoch: 10
+weights: output/ppyoloe_r50vd_300e_xd/69
+
+pretrain_weights: https://paddledet.bj.bcebos.com/models/pretrained/ResNet50_vd_ssld_pretrained.pdparams
+depth_mult: 1.0
+width_mult: 1.0

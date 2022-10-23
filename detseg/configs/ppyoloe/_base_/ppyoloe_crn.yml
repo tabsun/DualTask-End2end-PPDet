@@ -1,0 +1,53 @@
+architecture: YOLOv3
+norm_type: sync_bn
+use_ema: true
+ema_decay: 0.9998
+
+YOLOv3:
+  backbone: CSPResNet
+  neck: CustomCSPPAN
+  yolo_head: PPYOLOEHead
+  det_loss_weight: 0.5
+  post_process: ~
+
+CSPResNet:
+  layers: [3, 6, 6, 3]
+  channels: [64, 128, 256, 512, 1024]
+  return_idx: [0, 1, 2]
+  use_large_stem: True
+
+CustomCSPPAN:
+  out_channels: [768, 384, 192]
+  stage_num: 1
+  block_num: 3
+  act: 'swish'
+  spp: true
+
+PPYOLOEHead:
+  fpn_strides: [16, 8, 4]
+  grid_cell_scale: 3.18
+  grid_cell_offset: 0.5
+  static_assigner_epoch: 100
+  use_varifocal_loss: True
+  loss_weight: {class: 2.0, iou: 1.5, dfl: 0.5}
+  static_assigner:
+    name: ATSSAssigner
+    topk: 9
+  assigner:
+    name: TaskAlignedAssigner
+    topk: 13
+    alpha: 1.0
+    beta: 6.0
+  nms:
+    name: MultiClassNMS
+    nms_top_k: 1000
+    keep_top_k: 100
+    score_threshold: 0.01
+    nms_threshold: 0.6
+
+MultiSegHead:
+  arm_out_chs: [96, 192, 384] # mot s width_multi=0.5
+  seg_head_inter_chs: [64, 64, 64]
+  num_classes: 4
+  min_kept: [26000, 26000, 26000] # batch_size * 1024 * 512 // 16 
+  coef: [1, 1, 1]

@@ -1,0 +1,67 @@
+_BASE_: [
+  '../datasets/xd_detection.yml',
+  '../runtime.yml',
+  '../ppyoloe/_base_/optimizer_300e.yml',
+  '../ppyoloe/_base_/ppyoloe_crn.yml',
+  '../ppyoloe/_base_/ppyoloe_reader.yml',
+]
+log_iter: 100
+snapshot_epoch: 1
+weights: output/mot_ppyoloe_s_36e_xd/best_model
+
+pretrain_weights: ./pretrained/ppyoloe_crn_s_300e_coco.pdparams
+depth_mult: 0.33
+width_mult: 0.50
+
+num_classes: 7
+
+epoch: 36
+LearningRate:
+  base_lr: 0.0025
+  schedulers:
+    - !CosineDecay
+      max_epochs: 36
+    - !LinearWarmup
+      start_factor: 0.
+      epochs: 3
+
+TrainReader:
+  sample_transforms:
+    - Decode: {}
+    - InstaBoost: {
+        anno_file: ./dataset/train_det.json,
+        image_dir: ./dataset/images,
+        seg_dir: ./dataset/,
+        categories: ['car', 'vehicle', 'person', 'red_light', 'yellow_light', 'green_light', 'light'],
+       # action_prob: float = 0., 
+       # scale: tuple = (0.8, 1.2), 
+       # dx: float = 15, dy: float = 15,
+       # theta=(-1, 1), color_prob=0.5, 
+       # sync_nums_with_pillar=[0,1,2], sync_prob_with_pillar=[0.3, 0.4, 0.5], sync_heatmap_flag_with_pillar=False,
+       # sync_nums_only_obj=[0,1,2], sync_prob_only_obj=[0.3, 0.4, 0.5], sync_heatmap_flag_only_obj=False)
+        config_params: [
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[1.,0.,0.], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.91,0.09,0.0], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.05,0.95,0.0], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.33,0.47,0.2], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.31,0.39,0.3], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.38,0.42,0.2], 'sync_heatmap_flag_only_obj': True},
+                {'sync_nums_only_obj':[0,1,2], 'sync_prob_only_obj':[0.50,0.30,0.2], 'sync_heatmap_flag_only_obj': True}
+               ]
+      }
+    - LaneMask: {train_anno_file: ./dataset/train_det.json,
+                 val_anno_file: ./dataset/val_det.json,
+                 mask_dir: ./dataset/label_mask }
+    - RandomExpand: {ratio: 1.8, fill_value: [123.675, 116.28, 103.53]}
+    - RandomCrop: {}
+    - RandomFlip: {}
+  batch_transforms:
+    - BatchRandomResize: {target_size: [[450,800], [540,960], [630,1120], [720,1280]], random_size: True, random_interp: True, keep_ratio: False}
+    - NormalizeImage: {mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], is_scale: True}
+    - Permute: {}
+    - PadGT: {}
+  batch_size: 4
+  shuffle: true
+  drop_last: true
+  use_shared_memory: true
+  collate_batch: true
