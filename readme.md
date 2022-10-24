@@ -2,7 +2,7 @@
 
 # Overview
 <div align=center>
-<img width=888 height=500 src="https://github.com/tabsun/DualTask-End2end-PPDet/blob/master/00000107.png"/>
+<img width=720 height=400 src="https://github.com/tabsun/DualTask-End2end-PPDet/blob/master/00000107.png"/>
 </div>
 
 本项目旨在检测图像中的车辆、非机动车、行人、红灯、绿灯、黄灯、未亮灯7类目标，同时对车道线中实线、虚线与人行道线3类进行语义分割。
@@ -13,7 +13,7 @@
 最后，针对小目标检测和模型速度优化的问题，我们在architecture对比、backbone、input resolution、large feature map、多尺度训练、训练参数、阈值确定、多进程并行等多个方面进行对比实验，大大提高了模型的准确率和速度，达到最优的平衡。
 
 效果展示：
-<iframe src="https://player.bilibili.com/player.html?aid=516900302&bvid=BV1og41187E8&cid=870633969&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+![Bilibili](https://www.bilibili.com/video/BV1og41187E8/)
 
 # 模型训练
 ## Step 1. 
