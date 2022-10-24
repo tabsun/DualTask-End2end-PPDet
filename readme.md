@@ -1,14 +1,16 @@
 # A Dual-task and end-to-end Network for Detection and Semantic Segmentation
 
 # Overview
+![]("https://github.com/tabsun/DualTask-End2end-PPDet/blob/master/00000107.png")
+
 本项目旨在检测图像中的车辆、非机动车、行人、红灯、绿灯、黄灯、未亮灯7类目标，同时对车道线中实线、虚线与人行道线3类进行语义分割。我们设计了一个将目标检测与语义分割融合的dual-task end2end网络，从而实现在单个网络解决本场景中的问题。同时使得检测与分割从相互的内容信息中得到辅助，从而都得到了提高，尤其检测对分割结果的提高作用更加明显。
 其次，对于不均衡和缺失的类别，我们设计了一套更加贴近现实的基于instaboost的增强方式，替代原有的copy-paste策略。我们利用街景图像的语义分割结果估计目标出现的可能位置，而不是随机进行位置选择，从而使得目标出现位置更加合理。
 最后，针对小目标检测和模型速度优化的问题，我们在architecture对比、backbone、input resolution、large feature map、多尺度训练、训练参数、阈值确定、多进程并行等多个方面进行对比实验，大大提高了模型的准确率和速度，达到最优的平衡。
+
 效果展示：
-<video id="video" controls="" preload="none" poster="">
-      <source id="mp4" src="https://www.bilibili.com/video/BV1og41187E8" type="video/mp4">
-      <p>Your user agent does not support the HTML5 Video element.</p>
-</video>
+<iframe src="https://www.bilibili.com/video/BV1og41187E8" scrolling="no" border="0" frameborder="no"
+        framespacing="0" allowfullscreen="true" height=720 width=1280
+</iframe>
 
 # 模型训练
 ## Step 1. 
