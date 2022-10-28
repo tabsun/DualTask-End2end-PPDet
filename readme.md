@@ -2,7 +2,7 @@
 
 # Overview
 <div align=center>
-<img width=720 height=400 src="https://github.com/tabsun/DualTask-End2end-PPDet/blob/master/00000107.png"/>
+<img width=720 height=400 src="https://github.com/tabsun/DualTask-End2end-PPDet/blob/master/on_road_fast.gif"/>
 </div>
 
 本项目旨在检测图像中的车辆、非机动车、行人、红灯、绿灯、黄灯、未亮灯7类目标，同时对车道线中实线、虚线与人行道线3类进行语义分割。
